@@ -11,6 +11,13 @@ import (
 )
 
 func main() {
+	delay := os.Getenv("DELAY")
+	if delay != "" {
+		d, _ := time.ParseDuration(delay)
+		log.Println("Sleeping for", d)
+		time.Sleep(d)
+	}
+
 	addr := os.Getenv("ADDR")
 	if addr == "" {
 		addr = ":8000"
@@ -56,6 +63,8 @@ func quit(ctx context.Context, fs ...func(context.Context) error) {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
+
+	log.Println("starting shutdown")
 
 	ctx, done := context.WithTimeout(ctx, time.Second*10)
 	defer done()

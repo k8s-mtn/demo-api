@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 )
 
 func serve(addr string, resizeAddr string) (func(context.Context) error, error) {
@@ -16,6 +17,7 @@ func serve(addr string, resizeAddr string) (func(context.Context) error, error) 
 
 	http.HandleFunc("/magician", p.magicianHandler)
 	http.HandleFunc("/ping", pingHandler)
+	http.HandleFunc("/leak", leakHandler)
 
 	s := http.Server{
 		Addr:    addr,
@@ -74,4 +76,17 @@ func (p *proxy) magicianHandler(w http.ResponseWriter, r *http.Request) {
 
 	io.Copy(w, img)
 
+}
+
+func leakHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("leaking memory")
+
+	for {
+		a := make([]byte, 10000000)
+		go func(a []byte) {
+			time.Sleep(time.Second * 60)
+		}(a)
+
+		time.Sleep(time.Second * 1)
+	}
 }
