@@ -3,13 +3,7 @@ rm resized.png
 
 set -e
 
-curl -v --fail \
-  -F "x=100" \
-  -F "y=100" \
-  -F "filecomment=This is an image file" \
-  -F "photo=@Lenna.png" \
-  localhost:8080/magician \
-  -o resized.png
+curl -v --fail -X post --data-binary "@Lenna.png" -o resized.png "http://localhost:8080/magician?x=200&y=200"
 
 open Lenna.png
 

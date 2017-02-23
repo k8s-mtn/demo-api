@@ -13,7 +13,7 @@ func serve(addr string, resizeAddr string) (func(context.Context) error, error) 
 		return nil, err
 	}
 
-	http.Handle("/magician", p)
+	http.HandleFunc("/magician", p.magicianHandler)
 	http.HandleFunc("/ping", pingHandler)
 
 	s := http.Server{

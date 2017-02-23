@@ -21,6 +21,21 @@ func main() {
 		destAddr = "worker:8000"
 	}
 
+	twilioID := os.Getenv("TWILIO_ID")
+	twilioToken := os.Getenv("TWILIO_TOKEN")
+	twilioApplication := os.Getenv("TWILIO_APPLICATION")
+
+	if twilioID != "" && twilioToken != "" && twilioApplication != "" {
+		log.Println("Configuring Twilio")
+		setupTwilio(twilioID, twilioToken, twilioApplication)
+	}
+
+	imgurID := os.Getenv("IMGUR_ID")
+	if imgurID != "" {
+		log.Println("Configuring Imgur")
+		setupImgur(imgurID)
+	}
+
 	// start http server
 	log.Printf("Starting server on: [%s]\n", addr)
 	log.Printf("Setting resize server to: [%s]\n", destAddr)
