@@ -51,6 +51,8 @@ func NewProxy(dest string) (*proxy, error) {
 }
 
 func (p *proxy) magicianHandler(w http.ResponseWriter, r *http.Request) {
+	log.Println("received magician request")
+	defer log.Println("magician request done")
 
 	r.ParseForm()
 	maxX := r.Form.Get("x")
@@ -82,9 +84,15 @@ func leakHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println("leaking memory")
 
 	for {
-		a := make([]byte, 10000000)
+		a := make([]byte, 50000000)
 		go func(a []byte) {
-			time.Sleep(time.Second * 60)
+			for {
+				for i, v := range a {
+					a[i] = v + 1
+				}
+				time.Sleep(time.Second * 1)
+			}
+
 		}(a)
 
 		time.Sleep(time.Second * 1)
