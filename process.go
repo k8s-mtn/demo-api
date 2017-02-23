@@ -1,66 +1,36 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 )
 
-type proxy struct {
-	resizeAddr string
-}
-
-func NewProxy(dest string) (*proxy, error) {
-
-	p := proxy{
-		resizeAddr: dest,
-	}
-
-	return &p, nil
-}
-
-func (p *proxy) magicianHandler(w http.ResponseWriter, r *http.Request) {
-
-	r.ParseForm()
-	maxX := r.Form.Get("x")
-	maxY := r.Form.Get("y")
-
+func processImage(addr string, body io.Reader, maxX string, maxY string, to string, save bool) (io.ReadCloser, string, error) {
 	// resize the image
-	img, err := resize(p.resizeAddr, r.Body, maxX, maxY)
+	img, err := resize(addr, body, maxX, maxY)
 	if err != nil {
-		log.Printf("unable to resize: %s\n", err)
-		http.Error(w, "unable to resize: "+err.Error(), http.StatusBadRequest)
-		return
+		return nil, "", err
 	}
-	defer img.Close()
-
-	imgur := r.Form.Get("imgur")
-	twilio := r.Form.Get("send")
 
 	var url string
-	if imgur != "" || twilio != "" {
+	if save || to != "" {
 		url, err = postImgur(img)
 		if err != nil {
-			http.Error(w, "unable to post to imgur: "+err.Error(), http.StatusInternalServerError)
+			return nil, "", err
 		}
-
-		// replace the image reader with the url to imgur
-		img = ioutil.NopCloser(bytes.NewBuffer([]byte(url)))
 	}
 
-	if twilio != "" {
-		err := sendTwilio(twilio, url)
+	if to != "" {
+		err := sendTwilio(to, url)
 		if err != nil {
-			http.Error(w, "unable to send to twilio: "+err.Error(), http.StatusInternalServerError)
+			return nil, "", err
 		}
-		return
 	}
 
-	io.Copy(w, img)
+	return img, url, nil
 }
 
 func resize(addr string, r io.Reader, x string, y string) (io.ReadCloser, error) {

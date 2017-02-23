@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"net/http"
 )
@@ -32,4 +33,45 @@ func pingHandler(w http.ResponseWriter, r *http.Request) {
 	defer log.Println("Done with ping request")
 
 	w.Write([]byte("pong"))
+}
+
+type proxy struct {
+	resizeAddr string
+}
+
+func NewProxy(dest string) (*proxy, error) {
+
+	p := proxy{
+		resizeAddr: dest,
+	}
+
+	return &p, nil
+}
+
+func (p *proxy) magicianHandler(w http.ResponseWriter, r *http.Request) {
+
+	r.ParseForm()
+	maxX := r.Form.Get("x")
+	maxY := r.Form.Get("y")
+
+	imgur := r.Form.Get("imgur") != ""
+	twilio := r.Form.Get("send")
+
+	img, url, err := processImage(p.resizeAddr, r.Body, maxX, maxY, twilio, imgur)
+	if err != nil {
+		http.Error(w, "unable to process image: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if img != nil {
+		defer img.Close()
+	}
+
+	if url != "" {
+		w.Write([]byte(url))
+		return
+	}
+
+	io.Copy(w, img)
+
 }
