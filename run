@@ -1,0 +1,5 @@
+set -e
+
+go build -v -i
+
+RESIZE_ADDR=localhost:8000 ADDR=:8080 ./demo-api
